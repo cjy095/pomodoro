@@ -4,20 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>커스텀 뽀모도로 타이머</title>
+    
+    <!-- 앱 모드 설정 (상단바 제거 및 풀스크린) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f4f9fc">
+
+    <!-- 요청하신 이미지 아이콘 적용 (SVG Data URL) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='28' fill='%23ffffff'/><rect width='100' height='100' rx='28' fill='none' stroke='%23eaf4fa' stroke-width='4'/><circle cx='50' cy='50' r='40' fill='%23ffffff'/><path d='M 50 50 L 50 10 A 40 40 0 1 1 50 90 Z' fill='%239DD1F1' opacity='0.9'/><circle cx='50' cy='50' r='10' fill='%23f0f7fb' stroke='%23dbe8f0' stroke-width='1.5'/><line x1='50' y1='44' x2='50' y2='50' stroke='%2363b3e3' stroke-width='2.5' stroke-linecap='round'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='28' fill='%23ffffff'/><rect width='100' height='100' rx='28' fill='none' stroke='%23eaf4fa' stroke-width='4'/><circle cx='50' cy='50' r='40' fill='%23ffffff'/><path d='M 50 50 L 50 10 A 40 40 0 1 1 50 90 Z' fill='%239DD1F1' opacity='0.9'/><circle cx='50' cy='50' r='10' fill='%23f0f7fb' stroke='%23dbe8f0' stroke-width='1.5'/><line x1='50' y1='44' x2='50' y2='50' stroke='%2363b3e3' stroke-width='2.5' stroke-linecap='round'/></svg>">
+
     <style>
         :root {
             --bg-color: #f4f9fc;
-            --main-color: #9DD1F1; /* 요청하신 파스텔 블루 */
+            --main-color: #9DD1F1;
             --main-dark: #63b3e3;
             --text-color: #2c3e50;
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font-family);
@@ -27,6 +34,7 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            padding: 20px 10px;
             color: var(--text-color);
         }
 
@@ -35,35 +43,33 @@
             flex-direction: column;
             align-items: center;
             background: #ffffff;
-            padding: 35px 30px;
+            padding: 30px 20px;
             border-radius: 40px;
             box-shadow: 0 15px 35px rgba(157, 209, 241, 0.25);
-            width: 340px;
+            width: 100%;
+            max-width: 400px;
         }
 
-        /* 아날로그 타이머 외형 */
         .timer-case {
-            width: 260px;
-            height: 260px;
+            width: 330px;
+            height: 330px;
             background-color: #ffffff;
-            border-radius: 48px;
-            box-shadow: inset 0 0 0 2px #eaf4fa, 0 8px 25px rgba(0,0,0,0.04);
+            border-radius: 56px;
+            box-shadow: inset 0 0 0 2px #eaf4fa, 0 10px 30px rgba(0,0,0,0.05);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        /* 다이얼 및 시계 눈금 */
         .timer-dial {
-            width: 220px;
-            height: 220px;
+            width: 280px;
+            height: 280px;
             border-radius: 50%;
             position: relative;
         }
 
-        /* 부채꼴 섹터 (#9DD1F1) */
         .ocean-sector {
             position: absolute;
             width: 100%;
@@ -74,7 +80,6 @@
             transition: background 0.2s ease;
         }
 
-        /* 눈금 레이어 */
         .tick-marks {
             position: absolute;
             width: 100%;
@@ -86,37 +91,36 @@
         .tick {
             position: absolute;
             width: 2px;
-            height: 8px;
+            height: 10px;
             background-color: #cbdbe6;
             top: 4px;
             left: 50%;
-            transform-origin: 50% 106px;
+            transform-origin: 50% 136px;
         }
 
         .tick.major {
-            height: 12px;
-            width: 2.5px;
+            height: 15px;
+            width: 3px;
             background-color: var(--main-dark);
         }
 
         .tick-label {
             position: absolute;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 600;
             color: #647b8c;
-            width: 30px;
-            height: 20px;
+            width: 34px;
+            height: 24px;
             text-align: center;
-            line-height: 20px;
-            left: calc(50% - 15px);
-            top: 20px;
-            transform-origin: 50% 90px;
+            line-height: 24px;
+            left: calc(50% - 17px);
+            top: 24px;
+            transform-origin: 50% 116px;
         }
 
-        /* 중앙 노브 */
         .knob {
-            width: 42px;
-            height: 42px;
+            width: 52px;
+            height: 52px;
             background: linear-gradient(145deg, #ffffff, #f0f7fb);
             border: 1px solid #dbe8f0;
             border-radius: 50%;
@@ -124,51 +128,49 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             z-index: 4;
         }
 
         .knob::after {
             content: '';
             position: absolute;
-            top: 6px;
+            top: 8px;
             left: 50%;
-            width: 3px;
-            height: 10px;
+            width: 3.5px;
+            height: 12px;
             background-color: var(--main-dark);
             border-radius: 2px;
             transform: translateX(-50%);
         }
 
-        /* 바늘 */
         .hand {
             position: absolute;
-            width: 4px;
-            height: 85px;
+            width: 5px;
+            height: 110px;
             background: var(--main-dark);
             bottom: 50%;
-            left: calc(50% - 2px);
+            left: calc(50% - 2.5px);
             transform-origin: 50% 100%;
             border-radius: 4px;
             z-index: 3;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 시간 설정 입력창 및 디지털 시간 */
         .time-setting-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 20px;
         }
 
         .time-input {
-            width: 65px;
-            height: 50px;
+            width: 75px;
+            height: 56px;
             border: 2px solid #e1eef6;
-            border-radius: 12px;
-            font-size: 28px;
+            border-radius: 14px;
+            font-size: 32px;
             font-weight: 700;
             text-align: center;
             color: var(--text-color);
@@ -184,13 +186,12 @@
         }
 
         .time-separator {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             color: var(--main-dark);
             user-select: none;
         }
 
-        /* 버튼 컨트롤 */
         .controls {
             display: flex;
             gap: 12px;
@@ -199,10 +200,10 @@
 
         .btn {
             flex: 1;
-            padding: 14px 0;
+            padding: 15px 0;
             border: none;
             border-radius: 16px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -235,23 +236,22 @@
             color: #334155;
         }
 
-        /* 퀵 버튼 */
         .quick-buttons {
             display: flex;
             gap: 8px;
             width: 100%;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
         }
 
         .quick-btn {
             flex: 1;
-            padding: 8px 0;
-            font-size: 12px;
+            padding: 10px 0;
+            font-size: 13px;
             font-weight: 600;
             border: 1px solid #e1eef6;
             background-color: #f7fafc;
             color: #526878;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -266,7 +266,6 @@
 <body>
 
     <div class="container">
-        <!-- 아날로그 타이머 -->
         <div class="timer-case">
             <div class="timer-dial">
                 <div class="ocean-sector" id="sector"></div>
@@ -276,7 +275,6 @@
             </div>
         </div>
 
-        <!-- 퀵 추천 시간 버튼 -->
         <div class="quick-buttons">
             <button class="quick-btn" onclick="setQuickTime(25, 0)">25분</button>
             <button class="quick-btn" onclick="setQuickTime(10, 0)">10분</button>
@@ -284,14 +282,12 @@
             <button class="quick-btn" onclick="setQuickTime(1, 0)">1분</button>
         </div>
 
-        <!-- 분 : 초 직접 입력창 -->
         <div class="time-setting-container">
             <input type="number" id="min-input" class="time-input" min="0" max="60" value="25" placeholder="00" onchange="validateAndUpdate()" oninput="validateAndUpdate()">
             <span class="time-separator">:</span>
             <input type="number" id="sec-input" class="time-input" min="0" max="59" value="00" placeholder="00" onchange="validateAndUpdate()" oninput="validateAndUpdate()">
         </div>
 
-        <!-- 버튼 -->
         <div class="controls">
             <button class="btn btn-primary" id="start-btn" onclick="toggleTimer()">시작</button>
             <button class="btn btn-secondary" onclick="resetTimer()">리셋</button>
@@ -306,7 +302,6 @@
         const secInput = document.getElementById('sec-input');
         const startBtn = document.getElementById('start-btn');
 
-        // 눈금 생성 (0~60분 기준)
         for (let i = 0; i < 60; i++) {
             const tick = document.createElement('div');
             tick.className = 'tick' + (i % 5 === 0 ? ' major' : '');
@@ -328,14 +323,12 @@
         let isRunning = false;
 
         function updateUI() {
-            // 남은 시간을 입력창에 표시 (작동 중이 아닐 때는 사용자가 편집 가능)
             const m = Math.floor(remainingSeconds / 60);
             const s = remainingSeconds % 60;
             
             minInput.value = String(m).padStart(2, '0');
             secInput.value = String(s).padStart(2, '0');
 
-            // 바늘 및 부채꼴 각도 업데이트 (60분 스케일 기준)
             const minutes = remainingSeconds / 60;
             const degrees = (minutes / 60) * 360; 
 
@@ -349,7 +342,6 @@
             let m = parseInt(minInput.value, 10) || 0;
             let s = parseInt(secInput.value, 10) || 0;
 
-            // 범주 제한
             if (m < 0) m = 0;
             if (m > 60) m = 60;
             if (s < 0) s = 0;
@@ -358,7 +350,6 @@
             totalSeconds = (m * 60) + s;
             remainingSeconds = totalSeconds;
 
-            // 각도 업데이트
             const minutes = remainingSeconds / 60;
             const degrees = (minutes / 60) * 360;
             hand.style.transform = `translateX(-50%) rotate(${degrees}deg)`;
@@ -415,7 +406,6 @@
             updateUI();
         }
 
-        // 초기화
         updateUI();
     </script>
 </body>
