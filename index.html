@@ -341,17 +341,18 @@
             }
         }
 
-        let initialMinutes = 25;
-        let initialSeconds = 0;
-        let remainingSeconds = 25 * 60;
+        let targetTotalSeconds = 25 * 60; // 목표(리셋용) 전체 초
+        let remainingSeconds = 25 * 60;   // 현재 남아있는 초
         let timer = null;
         let isRunning = false;
 
-        // 입력값이 변할 때 기억하기
-        minInput.addEventListener('input', updateFromInput);
-        secInput.addEventListener('input', updateFromInput);
+        // 입력칸 바뀔 때 감지
+        minInput.addEventListener('change', readInputs);
+        minInput.addEventListener('keyup', readInputs);
+        secInput.addEventListener('change', readInputs);
+        secInput.addEventListener('keyup', readInputs);
 
-        function updateFromInput() {
+        function readInputs() {
             if (isRunning) return;
             let m = parseInt(minInput.value, 10) || 0;
             let s = parseInt(secInput.value, 10) || 0;
@@ -361,9 +362,8 @@
             if (s < 0) s = 0;
             if (s > 59) s = 59;
 
-            initialMinutes = m;
-            initialSeconds = s;
-            remainingSeconds = (m * 60) + s;
+            targetTotalSeconds = (m * 60) + s;
+            remainingSeconds = targetTotalSeconds;
             updateUI();
         }
 
@@ -383,9 +383,8 @@
 
         function setQuickTime(m, s) {
             if (isRunning) stopTimer();
-            initialMinutes = m;
-            initialSeconds = s;
-            remainingSeconds = (m * 60) + s;
+            targetTotalSeconds = (m * 60) + s;
+            remainingSeconds = targetTotalSeconds;
             updateUI();
         }
 
@@ -398,6 +397,7 @@
         }
 
         function startTimer() {
+            if (remainingSeconds <= 0) readInputs();
             if (remainingSeconds <= 0) return;
 
             requestWakeLock();
@@ -432,21 +432,20 @@
             }
         }
 
-        // --- 리셋 완벽 고침 ---
+        // 정지/일시정지/실행중 상관없이 항상 원래 시각으로 완벽 리셋!
         function resetTimer() {
             stopTimer();
-            remainingSeconds = (initialMinutes * 60) + initialSeconds;
+            remainingSeconds = targetTotalSeconds;
             updateUI();
         }
 
         updateUI();
     </script>
 
-    <!-- 서비스 워커 캐시 강제 업데이트 설정 -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(reg => {
-                reg.update(); // 강제 업데이트
+                reg.update();
             });
         }
     </script>
