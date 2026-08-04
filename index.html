@@ -284,9 +284,9 @@
         </div>
 
         <div class="time-setting-container">
-            <input type="number" id="min-input" class="time-input" min="0" max="60" value="25" placeholder="00" onchange="validateAndUpdate()" oninput="validateAndUpdate()">
+            <input type="number" id="min-input" class="time-input" min="0" max="60" value="25" placeholder="00">
             <span class="time-separator">:</span>
-            <input type="number" id="sec-input" class="time-input" min="0" max="59" value="00" placeholder="00" onchange="validateAndUpdate()" oninput="validateAndUpdate()">
+            <input type="number" id="sec-input" class="time-input" min="0" max="59" value="00" placeholder="00">
         </div>
 
         <div class="controls">
@@ -341,10 +341,31 @@
             }
         }
 
-        let totalSeconds = 25 * 60;
-        let remainingSeconds = totalSeconds;
+        let initialMinutes = 25;
+        let initialSeconds = 0;
+        let remainingSeconds = 25 * 60;
         let timer = null;
         let isRunning = false;
+
+        // 입력값이 변할 때 기억하기
+        minInput.addEventListener('input', updateFromInput);
+        secInput.addEventListener('input', updateFromInput);
+
+        function updateFromInput() {
+            if (isRunning) return;
+            let m = parseInt(minInput.value, 10) || 0;
+            let s = parseInt(secInput.value, 10) || 0;
+
+            if (m < 0) m = 0;
+            if (m > 60) m = 60;
+            if (s < 0) s = 0;
+            if (s > 59) s = 59;
+
+            initialMinutes = m;
+            initialSeconds = s;
+            remainingSeconds = (m * 60) + s;
+            updateUI();
+        }
 
         function updateUI() {
             const m = Math.floor(remainingSeconds / 60);
@@ -360,31 +381,12 @@
             sector.style.setProperty('--sweep-angle', `${degrees}deg`);
         }
 
-        function validateAndUpdate() {
-            if (isRunning) return;
-
-            let m = parseInt(minInput.value, 10) || 0;
-            let s = parseInt(secInput.value, 10) || 0;
-
-            if (m < 0) m = 0;
-            if (m > 60) m = 60;
-            if (s < 0) s = 0;
-            if (s > 59) s = 59;
-
-            totalSeconds = (m * 60) + s;
-            remainingSeconds = totalSeconds;
-
-            const minutes = remainingSeconds / 60;
-            const degrees = (minutes / 60) * 360;
-            hand.style.transform = `translateX(-50%) rotate(${degrees}deg)`;
-            sector.style.setProperty('--sweep-angle', `${degrees}deg`);
-        }
-
         function setQuickTime(m, s) {
             if (isRunning) stopTimer();
-            minInput.value = String(m).padStart(2, '0');
-            secInput.value = String(s).padStart(2, '0');
-            validateAndUpdate();
+            initialMinutes = m;
+            initialSeconds = s;
+            remainingSeconds = (m * 60) + s;
+            updateUI();
         }
 
         function toggleTimer() {
@@ -396,7 +398,6 @@
         }
 
         function startTimer() {
-            validateAndUpdate();
             if (remainingSeconds <= 0) return;
 
             requestWakeLock();
@@ -431,18 +432,22 @@
             }
         }
 
-        // --- 리셋 버그 수정 완료! ---
+        // --- 리셋 완벽 고침 ---
         function resetTimer() {
             stopTimer();
-            validateAndUpdate(); // 설정되어 있던 시간값으로 다시 원상복구!
+            remainingSeconds = (initialMinutes * 60) + initialSeconds;
+            updateUI();
         }
 
         updateUI();
     </script>
 
+    <!-- 서비스 워커 캐시 강제 업데이트 설정 -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                reg.update(); // 강제 업데이트
+            });
         }
     </script>
 </body>
