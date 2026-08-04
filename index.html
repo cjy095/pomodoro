@@ -5,17 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>커스텀 뽀모도로 타이머</title>
     
-    <!-- PWA 설정 -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#f4f9fc">
-
-    <!-- 아이콘 설정 -->
-    <link rel="icon" type="image/jpeg" href="icon.jpg">
-    <link rel="apple-touch-icon" href="icon.jpg">
-
     <style>
         :root {
             --bg-color: #f4f9fc;
@@ -178,12 +167,6 @@
             background-color: #fafdfd;
             font-family: inherit;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .time-input:focus {
-            border-color: var(--main-dark);
-            background-color: #ffffff;
         }
 
         .time-separator {
@@ -207,7 +190,6 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
 
         .btn-primary {
@@ -219,7 +201,6 @@
         .btn-primary.running {
             background-color: #ff9b9b;
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(255, 155, 155, 0.4);
         }
 
         .btn-secondary {
@@ -267,27 +248,24 @@
         </div>
 
         <div class="time-setting-container">
-            <input type="text" id="min-input" class="time-input" value="25" maxlength="2" inputmode="numeric">
+            <input type="number" id="min-input" class="time-input" value="25" min="0" max="60">
             <span class="time-separator">:</span>
-            <input type="text" id="sec-input" class="time-input" value="00" maxlength="2" inputmode="numeric">
+            <input type="number" id="sec-input" class="time-input" value="00" min="0" max="59">
         </div>
 
         <div class="controls">
             <button class="btn btn-primary" id="start-btn" onclick="toggleTimer()">시작</button>
-            <button class="btn btn-secondary" onclick="resetTimer()">리셋</button>
+            <button class="btn btn-secondary" id="reset-btn" onclick="resetTimer()">리셋</button>
         </div>
     </div>
 
     <script>
-        // 화면 안 꺼지게 유지
+        // 화면 꺼짐 방지
         let wakeLock = null;
         async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-            } catch (err) {}
+            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
         }
         document.addEventListener('click', requestWakeLock);
-        document.addEventListener('touchstart', requestWakeLock);
 
         // 눈금 그리기
         const ticksContainer = document.getElementById('ticks');
@@ -316,34 +294,25 @@
         let timer = null;
         let isRunning = false;
 
-        // 직접 숫자 입력 감지
-        minInput.addEventListener('input', onInputChange);
-        secInput.addEventListener('input', onInputChange);
+        minInput.addEventListener('input', syncInputToTimer);
+        secInput.addEventListener('input', syncInputToTimer);
 
-        function onInputChange() {
+        function syncInputToTimer() {
             if (isRunning) return;
-            let m = parseInt(minInput.value.replace(/[^0-9]/g, ''), 10) || 0;
-            let s = parseInt(secInput.value.replace(/[^0-9]/g, ''), 10) || 0;
-            if (m > 60) m = 60;
-            if (s > 59) s = 59;
+            let m = parseInt(minInput.value, 10) || 0;
+            let s = parseInt(secInput.value, 10) || 0;
             remainingSeconds = (m * 60) + s;
-            updateDialOnly();
+            updateDisplay();
         }
 
-        // 화면 표기 업데이트
-        function updateUI() {
+        function updateDisplay() {
             const m = Math.floor(remainingSeconds / 60);
             const s = remainingSeconds % 60;
-            
+
             minInput.value = String(m).padStart(2, '0');
             secInput.value = String(s).padStart(2, '0');
 
-            updateDialOnly();
-        }
-
-        function updateDialOnly() {
-            const minutes = remainingSeconds / 60;
-            const degrees = (minutes / 60) * 360; 
+            const degrees = ((remainingSeconds / 60) / 60) * 360;
             hand.style.transform = `translateX(-50%) rotate(${degrees}deg)`;
             sector.style.setProperty('--sweep-angle', `${degrees}deg`);
         }
@@ -351,19 +320,16 @@
         function setQuickTime(m, s) {
             if (isRunning) stopTimer();
             remainingSeconds = (m * 60) + s;
-            updateUI();
+            updateDisplay();
         }
 
         function toggleTimer() {
-            if (isRunning) {
-                stopTimer();
-            } else {
-                startTimer();
-            }
+            if (isRunning) stopTimer();
+            else startTimer();
         }
 
         function startTimer() {
-            onInputChange();
+            syncInputToTimer();
             if (remainingSeconds <= 0) return;
 
             requestWakeLock();
@@ -376,7 +342,7 @@
             timer = setInterval(() => {
                 if (remainingSeconds > 0) {
                     remainingSeconds--;
-                    updateUI();
+                    updateDisplay();
                 } else {
                     stopTimer();
                 }
@@ -390,23 +356,16 @@
             startBtn.classList.remove('running');
             minInput.disabled = false;
             secInput.disabled = false;
-
-            if (wakeLock !== null) {
-                wakeLock.release();
-                wakeLock = null;
-            }
         }
 
-        // [핵심] 리셋 누르면 즉시 강제로 00:00 처리!
+        // --- 무조건 00:00 으로 만듬 ---
         function resetTimer() {
             stopTimer();
             remainingSeconds = 0;
-            minInput.value = '00';
-            secInput.value = '00';
-            updateDialOnly();
+            updateDisplay();
         }
 
-        updateUI();
+        updateDisplay();
     </script>
 </body>
 </html>
