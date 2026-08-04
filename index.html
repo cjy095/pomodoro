@@ -296,7 +296,7 @@
     </div>
 
     <script>
-        // --- 화면 꺼짐 방지 기능 ---
+        // --- 화면 안 꺼지게 만드는 핵심 기능 ---
         let wakeLock = null;
 
         async function requestWakeLock() {
@@ -309,13 +309,17 @@
             }
         }
 
+        // 앱을 터치할 때 권한 강제 활성화
+        document.addEventListener('click', requestWakeLock);
+        document.addEventListener('touchstart', requestWakeLock);
+
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible') {
                 await requestWakeLock();
             }
         });
 
-        // --- 타이머 관련 기능 ---
+        // --- 타이머 기능 ---
         const ticksContainer = document.getElementById('ticks');
         const hand = document.getElementById('hand');
         const sector = document.getElementById('sector');
@@ -396,8 +400,7 @@
             validateAndUpdate();
             if (remainingSeconds <= 0) return;
 
-            // 타이머 작동 시 화면 안 꺼지게 설정
-            requestWakeLock();
+            requestWakeLock(); // 시작 누르면 화면 유지!
 
             isRunning = true;
             startBtn.textContent = '일시정지';
@@ -423,7 +426,6 @@
             minInput.disabled = false;
             secInput.disabled = false;
 
-            // 타이머 멈추면 화면 설정 해제
             if (wakeLock !== null) {
                 wakeLock.release();
                 wakeLock = null;
