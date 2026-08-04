@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>커스텀 뽀모도로 타이머</title>
     
-    <!-- PWA 설치 설정 연결 -->
+    <!-- PWA 설정 -->
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,7 +76,7 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: conic-gradient(from 0deg, var(--main-color) 0deg, var(--main-color) var(--sweep-angle, 150deg), transparent var(--sweep-angle, 150deg));
+            background: conic-gradient(from 0deg, var(--main-color) 0deg, var(--main-color) var(--sweep-angle, 0deg), transparent var(--sweep-angle, 0deg));
             opacity: 0.9;
             transition: background 0.2s ease;
         }
@@ -216,11 +216,6 @@
             box-shadow: 0 6px 16px rgba(157, 209, 241, 0.4);
         }
 
-        .btn-primary:hover {
-            background-color: #8cc4e8;
-            transform: translateY(-1px);
-        }
-
         .btn-primary.running {
             background-color: #ff9b9b;
             color: #ffffff;
@@ -230,11 +225,6 @@
         .btn-secondary {
             background-color: #f0f5f9;
             color: #64748b;
-        }
-
-        .btn-secondary:hover {
-            background-color: #e2ebf2;
-            color: #334155;
         }
 
         .quick-buttons {
@@ -254,13 +244,6 @@
             color: #526878;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .quick-btn:hover {
-            background-color: var(--main-color);
-            color: #2c3e50;
-            border-color: var(--main-color);
         }
     </style>
 </head>
@@ -284,9 +267,9 @@
         </div>
 
         <div class="time-setting-container">
-            <input type="number" id="min-input" class="time-input" min="0" max="60" value="25" placeholder="00">
+            <input type="text" id="min-input" class="time-input" value="25" maxlength="2" inputmode="numeric">
             <span class="time-separator">:</span>
-            <input type="number" id="sec-input" class="time-input" min="0" max="59" value="00" placeholder="00">
+            <input type="text" id="sec-input" class="time-input" value="00" maxlength="2" inputmode="numeric">
         </div>
 
         <div class="controls">
@@ -296,29 +279,17 @@
     </div>
 
     <script>
-        // --- 화면 안 꺼지게 만드는 기능 ---
+        // 화면 안 꺼지게 유지
         let wakeLock = null;
-
         async function requestWakeLock() {
             try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                }
-            } catch (err) {
-                console.log('Wake Lock Error:', err.message);
-            }
+                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) {}
         }
-
         document.addEventListener('click', requestWakeLock);
         document.addEventListener('touchstart', requestWakeLock);
 
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
-        });
-
-        // --- 타이머 기능 ---
+        // 눈금 그리기
         const ticksContainer = document.getElementById('ticks');
         const hand = document.getElementById('hand');
         const sector = document.getElementById('sector');
@@ -345,23 +316,21 @@
         let timer = null;
         let isRunning = false;
 
-        minInput.addEventListener('input', readInputs);
-        secInput.addEventListener('input', readInputs);
+        // 직접 숫자 입력 감지
+        minInput.addEventListener('input', onInputChange);
+        secInput.addEventListener('input', onInputChange);
 
-        function readInputs() {
+        function onInputChange() {
             if (isRunning) return;
-            let m = parseInt(minInput.value, 10) || 0;
-            let s = parseInt(secInput.value, 10) || 0;
-
-            if (m < 0) m = 0;
+            let m = parseInt(minInput.value.replace(/[^0-9]/g, ''), 10) || 0;
+            let s = parseInt(secInput.value.replace(/[^0-9]/g, ''), 10) || 0;
             if (m > 60) m = 60;
-            if (s < 0) s = 0;
             if (s > 59) s = 59;
-
             remainingSeconds = (m * 60) + s;
-            updateUI();
+            updateDialOnly();
         }
 
+        // 화면 표기 업데이트
         function updateUI() {
             const m = Math.floor(remainingSeconds / 60);
             const s = remainingSeconds % 60;
@@ -369,9 +338,12 @@
             minInput.value = String(m).padStart(2, '0');
             secInput.value = String(s).padStart(2, '0');
 
+            updateDialOnly();
+        }
+
+        function updateDialOnly() {
             const minutes = remainingSeconds / 60;
             const degrees = (minutes / 60) * 360; 
-
             hand.style.transform = `translateX(-50%) rotate(${degrees}deg)`;
             sector.style.setProperty('--sweep-angle', `${degrees}deg`);
         }
@@ -391,10 +363,10 @@
         }
 
         function startTimer() {
+            onInputChange();
             if (remainingSeconds <= 0) return;
 
             requestWakeLock();
-
             isRunning = true;
             startBtn.textContent = '일시정지';
             startBtn.classList.add('running');
@@ -425,22 +397,16 @@
             }
         }
 
-        // --- 리셋 누르면 무조건 00:00으로 초기화 ---
+        // [핵심] 리셋 누르면 즉시 강제로 00:00 처리!
         function resetTimer() {
             stopTimer();
-            remainingSeconds() = 0;
-            updateUI();
+            remainingSeconds = 0;
+            minInput.value = '00';
+            secInput.value = '00';
+            updateDialOnly();
         }
 
         updateUI();
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                reg.update();
-            });
-        }
     </script>
 </body>
 </html>
