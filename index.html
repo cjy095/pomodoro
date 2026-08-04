@@ -296,6 +296,26 @@
     </div>
 
     <script>
+        // --- 화면 꺼짐 방지 기능 ---
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log('Wake Lock Error:', err.message);
+            }
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // --- 타이머 관련 기능 ---
         const ticksContainer = document.getElementById('ticks');
         const hand = document.getElementById('hand');
         const sector = document.getElementById('sector');
@@ -376,6 +396,9 @@
             validateAndUpdate();
             if (remainingSeconds <= 0) return;
 
+            // 타이머 작동 시 화면 안 꺼지게 설정
+            requestWakeLock();
+
             isRunning = true;
             startBtn.textContent = '일시정지';
             startBtn.classList.add('running');
@@ -399,6 +422,12 @@
             startBtn.classList.remove('running');
             minInput.disabled = false;
             secInput.disabled = false;
+
+            // 타이머 멈추면 화면 설정 해제
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
         }
 
         function resetTimer() {
@@ -409,10 +438,11 @@
 
         updateUI();
     </script>
-      <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
-</script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </body>
 </html>
