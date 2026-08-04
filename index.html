@@ -341,16 +341,12 @@
             }
         }
 
-        let targetTotalSeconds = 25 * 60; // 목표(리셋용) 전체 초
-        let remainingSeconds = 25 * 60;   // 현재 남아있는 초
+        let remainingSeconds = 25 * 60;
         let timer = null;
         let isRunning = false;
 
-        // 입력칸 바뀔 때 감지
-        minInput.addEventListener('change', readInputs);
-        minInput.addEventListener('keyup', readInputs);
-        secInput.addEventListener('change', readInputs);
-        secInput.addEventListener('keyup', readInputs);
+        minInput.addEventListener('input', readInputs);
+        secInput.addEventListener('input', readInputs);
 
         function readInputs() {
             if (isRunning) return;
@@ -362,8 +358,7 @@
             if (s < 0) s = 0;
             if (s > 59) s = 59;
 
-            targetTotalSeconds = (m * 60) + s;
-            remainingSeconds = targetTotalSeconds;
+            remainingSeconds = (m * 60) + s;
             updateUI();
         }
 
@@ -383,8 +378,7 @@
 
         function setQuickTime(m, s) {
             if (isRunning) stopTimer();
-            targetTotalSeconds = (m * 60) + s;
-            remainingSeconds = targetTotalSeconds;
+            remainingSeconds = (m * 60) + s;
             updateUI();
         }
 
@@ -397,7 +391,6 @@
         }
 
         function startTimer() {
-            if (remainingSeconds <= 0) readInputs();
             if (remainingSeconds <= 0) return;
 
             requestWakeLock();
@@ -432,10 +425,10 @@
             }
         }
 
-        // 정지/일시정지/실행중 상관없이 항상 원래 시각으로 완벽 리셋!
+        // --- 리셋 누르면 무조건 00:00으로 초기화 ---
         function resetTimer() {
             stopTimer();
-            remainingSeconds = targetTotalSeconds;
+            remainingSeconds = 0;
             updateUI();
         }
 
