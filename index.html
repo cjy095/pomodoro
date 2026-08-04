@@ -296,7 +296,7 @@
     </div>
 
     <script>
-        // --- 화면 안 꺼지게 만드는 핵심 기능 ---
+        // --- 화면 안 꺼지게 만드는 기능 ---
         let wakeLock = null;
 
         async function requestWakeLock() {
@@ -309,7 +309,6 @@
             }
         }
 
-        // 앱을 터치할 때 권한 강제 활성화
         document.addEventListener('click', requestWakeLock);
         document.addEventListener('touchstart', requestWakeLock);
 
@@ -400,7 +399,7 @@
             validateAndUpdate();
             if (remainingSeconds <= 0) return;
 
-            requestWakeLock(); // 시작 누르면 화면 유지!
+            requestWakeLock();
 
             isRunning = true;
             startBtn.textContent = '일시정지';
@@ -432,10 +431,10 @@
             }
         }
 
+        // --- 리셋 버그 수정 완료! ---
         function resetTimer() {
             stopTimer();
-            remainingSeconds = totalSeconds;
-            updateUI();
+            validateAndUpdate(); // 설정되어 있던 시간값으로 다시 원상복구!
         }
 
         updateUI();
